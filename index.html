@@ -140,14 +140,24 @@
         <div class="sub">Consulta histórica de moedas via API PTAX do Banco Central.</div>
       </div>
 
-      <div class="controls">
-        <select id="selMoeda"></select>
-        <input id="dtIni" type="date" />
-        <input id="dtFim" type="date" />
-        <button id="btn">Carregar</button>
-        <button id="btnCsv" disabled>Baixar CSV</button>
-        <button id="btnXlsx" disabled>Baixar Excel</button>
-      </div>
+  <div class="controls">
+  <select id="selMoeda"></select>
+  <input id="dtIni" type="date" />
+  <input id="dtFim" type="date" />
+
+  <select id="selBoletim">
+    <option value="TODOS">Todos os boletins</option>
+    <option value="FECHAMENTO">Somente fechamento</option>
+    <option value="FECHAMENTO_INTERBANCARIO">Somente fechamento interbancário</option>
+    <option value="ABERTURA">Somente abertura</option>
+    <option value="INTERMEDIARIO">Somente intermediário</option>
+  </select>
+
+  <button id="btn">Carregar</button>
+  <button id="btnResetZoom" disabled>Reset Zoom</button>
+  <button id="btnCsv" disabled>Baixar CSV</button>
+  <button id="btnXlsx" disabled>Baixar Excel</button>
+</div>
     </header>
 
     <div class="grid">
