@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dexterity • PTAX Moedas</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    :root{
+      --dx-offwhite:#F8F3E6;
+      --dx-dark:#494949;
+      --dx-teal:#009B9B;
+      --dx-purple:#715495;
+      --dx-orange:#F99D33;
+
+      --bg: var(--dx-offwhite);
+      --text: #1f1f1f;
+      --muted: rgba(73,73,73,.72);
+      --line: rgba(73,73,73,.18);
+      --shadow: 0 12px 28px rgba(73,73,73,.18);
+      --radius: 14px;
+
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+
+    body{
+      margin:0;
+      color: var(--text);
+      background:
+        radial-gradient(1100px 700px at 18% 0%,
+          rgba(0,155,155,.18) 0%,
+          rgba(113,84,149,.10) 35%,
+          rgba(248,243,230,1) 70%),
+        var(--bg);
+    }
+
+    .wrap{ max-width:1280px; margin:0 auto; padding:26px 18px 44px; }
+    header{ display:flex; gap:14px; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; }
+    h1{ margin:0; font-size:20px; font-weight:900; color: var(--dx-dark); }
+    .sub{ color: var(--muted); font-size:13px; margin-top:6px; }
+
+    .controls{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    select, input, button{
+      background: rgba(248,243,230,.9);
+      border: 1px solid rgba(73,73,73,.22);
+      color: var(--dx-dark);
+      padding: 10px 12px;
+      border-radius: 12px;
+      outline: none;
+    }
+    select{ min-width: 220px; }
+    input{ min-width: 150px; }
+    button{
+      cursor:pointer;
+      font-weight:900;
+      border: 1px solid rgba(0,155,155,.55);
+      background: linear-gradient(180deg, rgba(0,155,155,.18), rgba(0,155,155,.07));
+    }
+    button:hover{
+      border-color: rgba(113,84,149,.55);
+      background: linear-gradient(180deg, rgba(113,84,149,.16), rgba(113,84,149,.06));
+    }
+    button:disabled{ opacity:.55; cursor:not-allowed; }
+
+    .grid{ display:grid; grid-template-columns: repeat(12, 1fr); gap: 12px; margin-top: 16px; }
+    .card{
+      background: linear-gradient(180deg, rgba(248,243,230,.96), rgba(248,243,230,.86));
+      border: 1px solid rgba(73,73,73,.18);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+    .span3{ grid-column: span 3; }
+    .span4{ grid-column: span 4; }
+    .span6{ grid-column: span 6; }
+    .span12{ grid-column: span 12; }
+
+    .kpi-title{ color: var(--muted); font-size:12px; margin-bottom:6px; }
+    .kpi-value{ font-size:22px; font-weight:950; color: var(--dx-dark); }
+    .kpi-foot{ margin-top:6px; color: var(--muted); font-size:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+
+    .pill{
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(73,73,73,.20);
+      background: rgba(248,243,230,.75);
+      color: rgba(73,73,73,.88);
+    }
+    .pill.good{
+      border-color: rgba(0,155,155,.55);
+      background: rgba(0,155,155,.10);
+      color: rgba(0,155,155,.95);
+    }
+    .pill.bad{
+      border-color: rgba(249,157,51,.60);
+      background: rgba(249,157,51,.12);
+      color: rgba(249,157,51,.95);
+    }
+
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
+    .status{ font-size:12px; color: var(--muted); }
+
+    table{ width:100%; border-collapse: collapse; }
+    thead th{
+      text-align:left;
+      font-size:12px;
+      color: var(--muted);
+      padding:10px 10px;
+      border-bottom: 1px solid var(--line);
+      cursor:pointer;
+      user-select:none;
+      white-space: nowrap;
+    }
+    tbody td{
+      padding:10px 10px;
+      border-bottom: 1px solid rgba(73,73,73,.10);
+      font-size:13px;
+      color: rgba(73,73,73,.92);
+      white-space: nowrap;
+    }
+    tbody tr:hover{ background: rgba(0,155,155,.06); }
+    .right{ text-align:right; }
+
+    @media (max-width: 980px){
+      .span3, .span4, .span6{ grid-column: span 12; }
+      select, input{ min-width:100%; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Dexterity • PTAX Moedas</h1>
+        <div class="sub">Consulta histórica de moedas via API PTAX do Banco Central.</div>
+      </div>
+
+      <div class="controls">
+        <select id="selMoeda"></select>
+        <input id="dtIni" type="date" />
+        <input id="dtFim" type="date" />
+        <button id="btn">Carregar</button>
+        <button id="btnCsv" disabled>Baixar CSV</button>
+        <button id="btnXlsx" disabled>Baixar Excel</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="card span3">
+        <div class="kpi-title">Última cotação compra</div>
+        <div class="kpi-value" id="kpiCompra">—</div>
+        <div class="kpi-foot">
+          <span class="pill" id="kpiData">Data: —</span>
+          <span class="pill" id="kpiMoeda">Moeda: —</span>
+        </div>
+      </div>
+
+      <div class="card span3">
+        <div class="kpi-title">Última cotação venda</div>
+        <div class="kpi-value" id="kpiVenda">—</div>
+        <div class="kpi-foot">
+          <span class="pill" id="kpiTipo">Boletim: —</span>
+        </div>
+      </div>
+
+      <div class="card span3">
+        <div class="kpi-title">Variação venda vs. anterior</div>
+        <div class="kpi-value" id="kpiDelta">—</div>
+        <div class="kpi-foot">
+          <span class="pill" id="kpiDeltaPct">—</span>
+          <span class="pill" id="kpiPrev">Anterior: —</span>
+        </div>
+      </div>
+
+      <div class="card span3">
+        <div class="kpi-title">Fonte</div>
+        <div class="kpi-value" style="font-size:16px;">Banco Central do Brasil – PTAX</div>
+        <div class="kpi-foot">
+          <span class="pill">Olinda OData</span>
+          <span class="pill">Export CSV/XLSX</span>
+        </div>
+      </div>
+
+      <div class="card span12">
+        <div class="row">
+          <strong>Gráfico</strong>
+          <div class="row">
+            <span class="status">Filtro:</span>
+            <input id="filter" placeholder="ex.: 2024 ou 15:00" />
+            <span class="status" id="status">—</span>
+          </div>
+        </div>
+        <div style="margin-top:10px;">
+          <canvas id="chart" height="90"></canvas>
+        </div>
+      </div>
+
+      <div class="card span12">
+        <div class="row">
+          <strong>Tabela</strong>
+          <span class="status" id="count">—</span>
+        </div>
+
+        <div style="overflow:auto; margin-top:10px;">
+          <table id="tbl">
+            <thead>
+              <tr>
+                <th data-k="dataHoraCotacao">Data/Hora</th>
+                <th data-k="cotacaoCompra" class="right">Cotação Compra</th>
+                <th data-k="cotacaoVenda" class="right">Cotação Venda</th>
+                <th data-k="paridadeCompra" class="right">Paridade Compra</th>
+                <th data-k="paridadeVenda" class="right">Paridade Venda</th>
+                <th data-k="tipoBoletim">Tipo Boletim</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const API_BASE = "/api/cotacao";
+
+  const MOEDAS = [
+    "AUD","CAD","CHF","DKK","EUR","GBP","JPY","NOK","NZD","SEK","USD",
+    "ARS","BOB","CLP","COP","MXN","PEN","PYG","UYU","VEF",
+    "CNY","HKD","INR","KRW","SGD","THB","TWD","ZAR"
+  ];
+
+  const selMoeda = document.getElementById("selMoeda");
+  const dtIni = document.getElementById("dtIni");
+  const dtFim = document.getElementById("dtFim");
+  const btn = document.getElementById("btn");
+  const btnCsv = document.getElementById("btnCsv");
+  const btnXlsx = document.getElementById("btnXlsx");
+  const filterEl = document.getElementById("filter");
+
+  const statusEl = document.getElementById("status");
+  const countEl = document.getElementById("count");
+
+  const kpiCompra = document.getElementById("kpiCompra");
+  const kpiVenda = document.getElementById("kpiVenda");
+  const kpiData = document.getElementById("kpiData");
+  const kpiMoeda = document.getElementById("kpiMoeda");
+  const kpiTipo = document.getElementById("kpiTipo");
+  const kpiDelta = document.getElementById("kpiDelta");
+  const kpiDeltaPct = document.getElementById("kpiDeltaPct");
+  const kpiPrev = document.getElementById("kpiPrev");
+
+  const tbody = document.querySelector("#tbl tbody");
+
+  let rawRows = [];
+  let viewRows = [];
+  let sortKey = "dataHoraCotacao";
+  let sortDir = "desc";
+  let chart;
+
+  function fmtNumber(n, dec = 6){
+    if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+    return Number(n).toLocaleString("pt-BR", {
+      minimumFractionDigits: dec,
+      maximumFractionDigits: dec
+    });
+  }
+
+  function ymdToApiDate(v){
+    // input date = YYYY-MM-DD
+    const [y,m,d] = v.split("-");
+    return `${m}-${d}-${y}`;
+  }
+
+  function fmtDateTime(iso){
+    const d = new Date(iso);
+    return d.toLocaleString("pt-BR");
+  }
+
+  function buildUrl(){
+    const moeda = selMoeda.value;
+    const dataInicial = ymdToApiDate(dtIni.value);
+    const dataFinal = ymdToApiDate(dtFim.value);
+    return `${API_BASE}?moeda=${encodeURIComponent(moeda)}&dataInicial=${encodeURIComponent(dataInicial)}&dataFinal=${encodeURIComponent(dataFinal)}`;
+  }
+
+  function normalizeRows(json){
+    const arr = json.value || [];
+    return arr.map(r => ({
+      paridadeCompra: r.paridadeCompra,
+      paridadeVenda: r.paridadeVenda,
+      cotacaoCompra: r.cotacaoCompra,
+      cotacaoVenda: r.cotacaoVenda,
+      dataHoraCotacao: r.dataHoraCotacao,
+      tipoBoletim: r.tipoBoletim || ""
+    })).sort((a,b) => new Date(b.dataHoraCotacao) - new Date(a.dataHoraCotacao));
+  }
+
+  function renderKPIs(rows){
+    if (!rows.length){
+      kpiCompra.textContent = "—";
+      kpiVenda.textContent = "—";
+      kpiData.textContent = "Data: —";
+      kpiMoeda.textContent = "Moeda: —";
+      kpiTipo.textContent = "Boletim: —";
+      kpiDelta.textContent = "—";
+      kpiDeltaPct.textContent = "—";
+      kpiPrev.textContent = "Anterior: —";
+      return;
+    }
+
+    const last = rows[0];
+    const prev = rows[1];
+
+    kpiCompra.textContent = fmtNumber(last.cotacaoCompra);
+    kpiVenda.textContent = fmtNumber(last.cotacaoVenda);
+    kpiData.textContent = `Data: ${fmtDateTime(last.dataHoraCotacao)}`;
+    kpiMoeda.textContent = `Moeda: ${selMoeda.value}`;
+    kpiTipo.textContent = `Boletim: ${last.tipoBoletim || "—"}`;
+
+    if (prev && last.cotacaoVenda != null && prev.cotacaoVenda != null){
+      const delta = Number(last.cotacaoVenda) - Number(prev.cotacaoVenda);
+      const pct = prev.cotacaoVenda !== 0 ? (delta / Number(prev.cotacaoVenda)) * 100 : NaN;
+
+      kpiDelta.textContent = fmtNumber(delta);
+      kpiDeltaPct.classList.remove("good","bad");
+      if (delta >= 0) kpiDeltaPct.classList.add("good");
+      if (delta < 0) kpiDeltaPct.classList.add("bad");
+      kpiDeltaPct.textContent = Number.isFinite(pct)
+        ? `${pct.toLocaleString("pt-BR",{minimumFractionDigits:2, maximumFractionDigits:2})}%`
+        : "—";
+      kpiPrev.textContent = `Anterior: ${fmtDateTime(prev.dataHoraCotacao)} • ${fmtNumber(prev.cotacaoVenda)}`;
+    } else {
+      kpiDelta.textContent = "—";
+      kpiDeltaPct.textContent = "—";
+      kpiPrev.textContent = "Anterior: —";
+    }
+  }
+
+  function renderTable(rows){
+    tbody.innerHTML = "";
+    const frag = document.createDocumentFragment();
+
+    for (const r of rows){
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${fmtDateTime(r.dataHoraCotacao)}</td>
+        <td class="right">${fmtNumber(r.cotacaoCompra)}</td>
+        <td class="right">${fmtNumber(r.cotacaoVenda)}</td>
+        <td class="right">${fmtNumber(r.paridadeCompra, 8)}</td>
+        <td class="right">${fmtNumber(r.paridadeVenda, 8)}</td>
+        <td>${r.tipoBoletim || ""}</td>
+      `;
+      frag.appendChild(tr);
+    }
+
+    tbody.appendChild(frag);
+    countEl.textContent = `${rows.length} linhas`;
+  }
+
+  function renderChart(rows){
+    const asc = [...rows].sort((a,b) => new Date(a.dataHoraCotacao) - new Date(b.dataHoraCotacao));
+    const labels = asc.map(r => fmtDateTime(r.dataHoraCotacao));
+    const data = asc.map(r => r.cotacaoVenda);
+
+    const ctx = document.getElementById("chart");
+    if (chart) chart.destroy();
+
+    chart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "Cotação Venda",
+          data,
+          tension: 0.2,
+          pointRadius: 0,
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { x: { ticks: { maxTicksLimit: 10 } } }
+      }
+    });
+  }
+
+  function applyFilterAndSort(){
+    const q = filterEl.value.trim().toLowerCase();
+
+    viewRows = !q
+      ? [...rawRows]
+      : rawRows.filter(r =>
+          fmtDateTime(r.dataHoraCotacao).toLowerCase().includes(q) ||
+          String(r.tipoBoletim || "").toLowerCase().includes(q)
+        );
+
+    const rows = [...viewRows];
+    rows.sort((a,b) => {
+      let av = a[sortKey];
+      let bv = b[sortKey];
+
+      if (sortKey === "dataHoraCotacao") {
+        av = new Date(av).getTime();
+        bv = new Date(bv).getTime();
+      } else if (typeof av === "string") {
+        av = av.toLowerCase();
+        bv = bv.toLowerCase();
+      } else {
+        av = Number(av);
+        bv = Number(bv);
+      }
+
+      if (av < bv) return sortDir === "asc" ? -1 : 1;
+      if (av > bv) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+
+    viewRows = rows;
+    renderTable(viewRows);
+    renderChart(viewRows);
+  }
+
+  function toCsv(rows){
+    const lines = [[
+      "dataHoraCotacao",
+      "cotacaoCompra",
+      "cotacaoVenda",
+      "paridadeCompra",
+      "paridadeVenda",
+      "tipoBoletim"
+    ].join(";")];
+
+    for (const r of rows){
+      lines.push([
+        fmtDateTime(r.dataHoraCotacao),
+        String(r.cotacaoCompra ?? "").replace(".", ","),
+        String(r.cotacaoVenda ?? "").replace(".", ","),
+        String(r.paridadeCompra ?? "").replace(".", ","),
+        String(r.paridadeVenda ?? "").replace(".", ","),
+        r.tipoBoletim || ""
+      ].join(";"));
+    }
+    return lines.join("\n");
+  }
+
+  async function loadSeries(){
+    if (!dtIni.value || !dtFim.value){
+      statusEl.textContent = "Preencha a data inicial e final.";
+      return;
+    }
+
+    btn.disabled = true;
+    btnCsv.disabled = true;
+    btnXlsx.disabled = true;
+    statusEl.textContent = "Carregando...";
+    rawRows = [];
+    viewRows = [];
+    renderTable([]);
+    if (chart) chart.destroy();
+
+    try {
+      const url = buildUrl();
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const json = await res.json();
+      const rows = normalizeRows(json);
+
+      rawRows = rows;
+      viewRows = [...rows];
+      sortKey = "dataHoraCotacao";
+      sortDir = "desc";
+
+      renderKPIs(rows);
+      applyFilterAndSort();
+
+      statusEl.textContent = `OK • ${selMoeda.value}`;
+      btnCsv.disabled = rows.length === 0;
+      btnXlsx.disabled = rows.length === 0;
+
+      localStorage.setItem("ptax_last_moeda", selMoeda.value);
+      localStorage.setItem("ptax_last_dtIni", dtIni.value);
+      localStorage.setItem("ptax_last_dtFim", dtFim.value);
+    } catch (err) {
+      statusEl.textContent = `Erro ao carregar: ${err.message}`;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // init moedas
+  MOEDAS.forEach(m => {
+    const opt = document.createElement("option");
+    opt.value = m;
+    opt.textContent = m;
+    selMoeda.appendChild(opt);
+  });
+
+  // defaults
+  const today = new Date();
+  const end = today.toISOString().slice(0,10);
+  const startDate = new Date();
+  startDate.setFullYear(today.getFullYear() - 1);
+  const start = startDate.toISOString().slice(0,10);
+
+  dtIni.value = localStorage.getItem("ptax_last_dtIni") || start;
+  dtFim.value = localStorage.getItem("ptax_last_dtFim") || end;
+  selMoeda.value = localStorage.getItem("ptax_last_moeda") || "EUR";
+
+  document.querySelectorAll("#tbl thead th").forEach(th => {
+    th.addEventListener("click", () => {
+      const k = th.dataset.k;
+      if (sortKey === k) sortDir = sortDir === "asc" ? "desc" : "asc";
+      else {
+        sortKey = k;
+        sortDir = k === "dataHoraCotacao" ? "desc" : "asc";
+      }
+      applyFilterAndSort();
+    });
+  });
+
+  filterEl.addEventListener("input", applyFilterAndSort);
+  btn.addEventListener("click", loadSeries);
+
+  btnCsv.addEventListener("click", () => {
+    const csv = toCsv(viewRows);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `ptax_${selMoeda.value}_${dtIni.value}_${dtFim.value}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  btnXlsx.addEventListener("click", () => {
+    const aoa = [[
+      "dataHoraCotacao",
+      "cotacaoCompra",
+      "cotacaoVenda",
+      "paridadeCompra",
+      "paridadeVenda",
+      "tipoBoletim"
+    ]];
+
+    viewRows.forEach(r => {
+      aoa.push([
+        fmtDateTime(r.dataHoraCotacao),
+        r.cotacaoCompra,
+        r.cotacaoVenda,
+        r.paridadeCompra,
+        r.paridadeVenda,
+        r.tipoBoletim || ""
+      ]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "PTAX");
+    XLSX.writeFile(wb, `ptax_${selMoeda.value}_${dtIni.value}_${dtFim.value}.xlsx`);
+  });
+
+  loadSeries();
+</script>
+</body>
+</html>
