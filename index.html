@@ -6,11 +6,8 @@
   <title>Dexterity • PTAX Moedas</title>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.2.0/dist/chartjs-plugin-zoom.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.2.0/dist/chartjs-plugin-zoom.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
     :root{
@@ -26,98 +23,180 @@
       --line: rgba(73,73,73,.18);
       --shadow: 0 12px 28px rgba(73,73,73,.18);
       --radius: 14px;
+      --card-bg: linear-gradient(180deg, rgba(248,243,230,.96), rgba(248,243,230,.86));
 
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
     }
+
+    * { box-sizing: border-box; }
 
     body{
       margin:0;
       color: var(--text);
       background:
-        radial-gradient(1100px 700px at 18% 0%,
-          rgba(0,155,155,.18) 0%,
-          rgba(113,84,149,.10) 35%,
-          rgba(248,243,230,1) 70%),
+        radial-gradient(1100px 700px at 18% 0%, rgba(0,155,155,.18) 0%, rgba(113,84,149,.10) 35%, rgba(248,243,230,1) 70%),
         var(--bg);
     }
 
-    .wrap{ max-width:1280px; margin:0 auto; padding:26px 18px 44px; }
-    header{ display:flex; gap:14px; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; }
-    h1{ margin:0; font-size:20px; font-weight:900; color: var(--dx-dark); }
-    .sub{ color: var(--muted); font-size:13px; margin-top:6px; }
+    .wrap{
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 26px 18px 44px;
+    }
 
-    .controls{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    header{
+      display:flex;
+      gap:14px;
+      align-items:flex-end;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+
+    h1{
+      margin:0;
+      font-size:20px;
+      font-weight:900;
+      color: var(--dx-dark);
+      letter-spacing:.2px;
+    }
+
+    .sub{
+      color: var(--muted);
+      font-size:13px;
+      margin-top:6px;
+    }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
     select, input, button{
-      background: rgba(248,243,230,.9);
+      background: rgba(248,243,230,.92);
       border: 1px solid rgba(73,73,73,.22);
       color: var(--dx-dark);
       padding: 10px 12px;
       border-radius: 12px;
       outline: none;
+      min-height: 42px;
     }
-    select{ min-width: 220px; }
-    input{ min-width: 150px; }
+
+    select{ min-width: 200px; }
+    input[type="date"]{ min-width: 155px; }
+    input[type="text"]{ min-width: 220px; }
+
     button{
       cursor:pointer;
       font-weight:900;
       border: 1px solid rgba(0,155,155,.55);
       background: linear-gradient(180deg, rgba(0,155,155,.18), rgba(0,155,155,.07));
     }
+
     button:hover{
       border-color: rgba(113,84,149,.55);
       background: linear-gradient(180deg, rgba(113,84,149,.16), rgba(113,84,149,.06));
     }
-    button:disabled{ opacity:.55; cursor:not-allowed; }
 
-    .grid{ display:grid; grid-template-columns: repeat(12, 1fr); gap: 12px; margin-top: 16px; }
+    button:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+
     .card{
-      background: linear-gradient(180deg, rgba(248,243,230,.96), rgba(248,243,230,.86));
+      background: var(--card-bg);
       border: 1px solid rgba(73,73,73,.18);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       padding: 14px;
+      min-width: 0;
     }
-    <div class="card span12">
-  <div class="kpi-title">Ponto selecionado no gráfico</div>
-  <div class="kpi-value" id="selectedPointMain">—</div>
-  <div class="kpi-foot">
-    <span class="pill" id="selectedPointDate">Data/Hora: —</span>
-    <span class="pill" id="selectedPointCompra">Compra: —</span>
-    <span class="pill" id="selectedPointVenda">Venda: —</span>
-    <span class="pill" id="selectedPointTipo">Boletim: —</span>
-  </div>
-</div>
+
     .span3{ grid-column: span 3; }
     .span4{ grid-column: span 4; }
     .span6{ grid-column: span 6; }
+    .span8{ grid-column: span 8; }
     .span12{ grid-column: span 12; }
 
-    .kpi-title{ color: var(--muted); font-size:12px; margin-bottom:6px; }
-    .kpi-value{ font-size:22px; font-weight:950; color: var(--dx-dark); }
-    .kpi-foot{ margin-top:6px; color: var(--muted); font-size:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .kpi-title{
+      color: var(--muted);
+      font-size:12px;
+      margin-bottom:6px;
+    }
+
+    .kpi-value{
+      font-size:22px;
+      font-weight:950;
+      color: var(--dx-dark);
+      line-height: 1.2;
+      word-break: break-word;
+    }
+
+    .kpi-foot{
+      margin-top:8px;
+      color: var(--muted);
+      font-size:12px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
 
     .pill{
-      padding: 3px 8px;
+      padding: 4px 9px;
       border-radius: 999px;
       border: 1px solid rgba(73,73,73,.20);
       background: rgba(248,243,230,.75);
       color: rgba(73,73,73,.88);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
+
     .pill.good{
       border-color: rgba(0,155,155,.55);
       background: rgba(0,155,155,.10);
       color: rgba(0,155,155,.95);
     }
+
     .pill.bad{
       border-color: rgba(249,157,51,.60);
       background: rgba(249,157,51,.12);
       color: rgba(249,157,51,.95);
     }
 
-    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
-    .status{ font-size:12px; color: var(--muted); }
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
 
-    table{ width:100%; border-collapse: collapse; }
+    .status{
+      font-size:12px;
+      color: var(--muted);
+    }
+
+    .chart-wrap{
+      margin-top: 10px;
+      height: 420px;
+      position: relative;
+    }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+    }
+
     thead th{
       text-align:left;
       font-size:12px;
@@ -127,7 +206,12 @@
       cursor:pointer;
       user-select:none;
       white-space: nowrap;
+      position: sticky;
+      top: 0;
+      background: rgba(248,243,230,.98);
+      z-index: 1;
     }
+
     tbody td{
       padding:10px 10px;
       border-bottom: 1px solid rgba(73,73,73,.10);
@@ -135,42 +219,77 @@
       color: rgba(73,73,73,.92);
       white-space: nowrap;
     }
-    tbody tr:hover{ background: rgba(0,155,155,.06); }
-    .right{ text-align:right; }
 
-    @media (max-width: 980px){
-      .span3, .span4, .span6{ grid-column: span 12; }
-      select, input{ min-width:100%; }
+    tbody tr:hover{
+      background: rgba(0,155,155,.06);
+    }
+
+    .right{
+      text-align:right;
+    }
+
+    .table-wrap{
+      overflow:auto;
+      margin-top:10px;
+      max-height: 520px;
+      border-radius: 10px;
+    }
+
+    .help-text{
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    @media (max-width: 1100px){
+      .span3, .span4, .span6, .span8{ grid-column: span 12; }
+    }
+
+    @media (max-width: 700px){
+      .controls{
+        width: 100%;
+      }
+
+      .controls > *{
+        width: 100%;
+      }
+
+      select, input[type="date"], input[type="text"], button{
+        min-width: 100%;
+      }
+
+      .chart-wrap{
+        height: 340px;
+      }
     }
   </style>
 </head>
-
 <body>
   <div class="wrap">
     <header>
       <div>
         <h1>Dexterity • PTAX Moedas</h1>
-        <div class="sub">Consulta histórica de moedas via API PTAX do Banco Central.</div>
+        <div class="sub">Consulta histórica de moedas via API PTAX do Banco Central, com zoom, filtro por fechamento, exportação e análise visual.</div>
       </div>
 
-  <div class="controls">
-  <select id="selMoeda"></select>
-  <input id="dtIni" type="date" />
-  <input id="dtFim" type="date" />
+      <div class="controls">
+        <select id="selMoeda"></select>
+        <input id="dtIni" type="date" />
+        <input id="dtFim" type="date" />
 
-  <select id="selBoletim">
-    <option value="TODOS">Todos os boletins</option>
-    <option value="FECHAMENTO">Somente fechamento</option>
-    <option value="FECHAMENTO_INTERBANCARIO">Somente fechamento interbancário</option>
-    <option value="ABERTURA">Somente abertura</option>
-    <option value="INTERMEDIARIO">Somente intermediário</option>
-  </select>
+        <select id="selBoletim">
+          <option value="TODOS">Todos os boletins</option>
+          <option value="FECHAMENTO">Somente fechamento</option>
+          <option value="FECHAMENTO_INTERBANCARIO">Somente fechamento interbancário</option>
+          <option value="ABERTURA">Somente abertura</option>
+          <option value="INTERMEDIARIO">Somente intermediário</option>
+        </select>
 
-  <button id="btn">Carregar</button>
-  <button id="btnResetZoom" disabled>Reset Zoom</button>
-  <button id="btnCsv" disabled>Baixar CSV</button>
-  <button id="btnXlsx" disabled>Baixar Excel</button>
-</div>
+        <button id="btn">Carregar</button>
+        <button id="btnResetZoom" disabled>Reset Zoom</button>
+        <button id="btnCsv" disabled>Baixar CSV</button>
+        <button id="btnXlsx" disabled>Baixar Excel</button>
+      </div>
     </header>
 
     <div class="grid">
@@ -205,7 +324,18 @@
         <div class="kpi-value" style="font-size:16px;">Banco Central do Brasil – PTAX</div>
         <div class="kpi-foot">
           <span class="pill">Olinda OData</span>
-          <span class="pill">Export CSV/XLSX</span>
+          <span class="pill">CSV / XLSX</span>
+        </div>
+      </div>
+
+      <div class="card span12">
+        <div class="kpi-title">Ponto selecionado no gráfico</div>
+        <div class="kpi-value" id="selectedPointMain">—</div>
+        <div class="kpi-foot">
+          <span class="pill" id="selectedPointDate">Data/Hora: —</span>
+          <span class="pill" id="selectedPointCompra">Compra: —</span>
+          <span class="pill" id="selectedPointVenda">Venda: —</span>
+          <span class="pill" id="selectedPointTipo">Boletim: —</span>
         </div>
       </div>
 
@@ -214,12 +344,17 @@
           <strong>Gráfico</strong>
           <div class="row">
             <span class="status">Filtro:</span>
-            <input id="filter" placeholder="ex.: 2024 ou 15:00" />
+            <input id="filter" type="text" placeholder="ex.: 2024, fechamento, 13:00" />
             <span class="status" id="status">—</span>
           </div>
         </div>
-        <div style="margin-top:10px;">
-          <canvas id="chart" height="90"></canvas>
+
+        <div class="chart-wrap">
+          <canvas id="chart"></canvas>
+        </div>
+
+        <div class="help-text">
+          Dica: use o scroll do mouse para zoom, arraste para zoom de área, clique e arraste para pan horizontal, e clique em um ponto para detalhar a cotação.
         </div>
       </div>
 
@@ -229,7 +364,7 @@
           <span class="status" id="count">—</span>
         </div>
 
-        <div style="overflow:auto; margin-top:10px;">
+        <div class="table-wrap">
           <table id="tbl">
             <thead>
               <tr>
@@ -248,83 +383,141 @@
     </div>
   </div>
 
-<script>
-  const API_BASE = "/api/cotacao";
+  <script>
+    const API_BASE = "/api/cotacao";
 
-  const MOEDAS = [
-    "AUD","CAD","CHF","DKK","EUR","GBP","JPY","NOK","NZD","SEK","USD",
-    "ARS","BOB","CLP","COP","MXN","PEN","PYG","UYU","VEF",
-    "CNY","HKD","INR","KRW","SGD","THB","TWD","ZAR"
-  ];
+    const MOEDAS = [
+      "AUD","CAD","CHF","DKK","EUR","GBP","JPY","NOK","NZD","SEK","USD",
+      "ARS","BOB","CLP","COP","MXN","PEN","PYG","UYU","VEF",
+      "CNY","HKD","INR","KRW","SGD","THB","TWD","ZAR"
+    ];
 
-  const selMoeda = document.getElementById("selMoeda");
-  const dtIni = document.getElementById("dtIni");
-  const dtFim = document.getElementById("dtFim");
-  const btn = document.getElementById("btn");
-  const btnCsv = document.getElementById("btnCsv");
-  const btnXlsx = document.getElementById("btnXlsx");
-  const filterEl = document.getElementById("filter");
+    const selMoeda = document.getElementById("selMoeda");
+    const dtIni = document.getElementById("dtIni");
+    const dtFim = document.getElementById("dtFim");
+    const selBoletim = document.getElementById("selBoletim");
 
-  const statusEl = document.getElementById("status");
-  const countEl = document.getElementById("count");
+    const btn = document.getElementById("btn");
+    const btnResetZoom = document.getElementById("btnResetZoom");
+    const btnCsv = document.getElementById("btnCsv");
+    const btnXlsx = document.getElementById("btnXlsx");
 
-  const kpiCompra = document.getElementById("kpiCompra");
-  const kpiVenda = document.getElementById("kpiVenda");
-  const kpiData = document.getElementById("kpiData");
-  const kpiMoeda = document.getElementById("kpiMoeda");
-  const kpiTipo = document.getElementById("kpiTipo");
-  const kpiDelta = document.getElementById("kpiDelta");
-  const kpiDeltaPct = document.getElementById("kpiDeltaPct");
-  const kpiPrev = document.getElementById("kpiPrev");
+    const filterEl = document.getElementById("filter");
 
-  const tbody = document.querySelector("#tbl tbody");
+    const statusEl = document.getElementById("status");
+    const countEl = document.getElementById("count");
 
-  let rawRows = [];
-  let viewRows = [];
-  let sortKey = "dataHoraCotacao";
-  let sortDir = "desc";
-  let chart;
+    const kpiCompra = document.getElementById("kpiCompra");
+    const kpiVenda = document.getElementById("kpiVenda");
+    const kpiData = document.getElementById("kpiData");
+    const kpiMoeda = document.getElementById("kpiMoeda");
+    const kpiTipo = document.getElementById("kpiTipo");
+    const kpiDelta = document.getElementById("kpiDelta");
+    const kpiDeltaPct = document.getElementById("kpiDeltaPct");
+    const kpiPrev = document.getElementById("kpiPrev");
 
-  function fmtNumber(n, dec = 6){
-    if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
-    return Number(n).toLocaleString("pt-BR", {
-      minimumFractionDigits: dec,
-      maximumFractionDigits: dec
-    });
-  }
+    const selectedPointMain = document.getElementById("selectedPointMain");
+    const selectedPointDate = document.getElementById("selectedPointDate");
+    const selectedPointCompra = document.getElementById("selectedPointCompra");
+    const selectedPointVenda = document.getElementById("selectedPointVenda");
+    const selectedPointTipo = document.getElementById("selectedPointTipo");
 
-  function ymdToApiDate(v){
-    // input date = YYYY-MM-DD
-    const [y,m,d] = v.split("-");
-    return `${m}-${d}-${y}`;
-  }
+    const tbody = document.querySelector("#tbl tbody");
+    const chartCanvas = document.getElementById("chart");
 
-  function fmtDateTime(iso){
-    const d = new Date(iso);
-    return d.toLocaleString("pt-BR");
-  }
+    let rawRows = [];
+    let viewRows = [];
+    let chart = null;
+    let sortKey = "dataHoraCotacao";
+    let sortDir = "desc";
 
-  function buildUrl(){
-    const moeda = selMoeda.value;
-    const dataInicial = ymdToApiDate(dtIni.value);
-    const dataFinal = ymdToApiDate(dtFim.value);
-    return `${API_BASE}?moeda=${encodeURIComponent(moeda)}&dataInicial=${encodeURIComponent(dataInicial)}&dataFinal=${encodeURIComponent(dataFinal)}`;
-  }
+    function fmtNumber(value, decimals = 6) {
+      if (value === null || value === undefined || value === "" || Number.isNaN(Number(value))) {
+        return "—";
+      }
+      return Number(value).toLocaleString("pt-BR", {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+    }
 
-  function normalizeRows(json){
-    const arr = json.value || [];
-    return arr.map(r => ({
-      paridadeCompra: r.paridadeCompra,
-      paridadeVenda: r.paridadeVenda,
-      cotacaoCompra: r.cotacaoCompra,
-      cotacaoVenda: r.cotacaoVenda,
-      dataHoraCotacao: r.dataHoraCotacao,
-      tipoBoletim: r.tipoBoletim || ""
-    })).sort((a,b) => new Date(b.dataHoraCotacao) - new Date(a.dataHoraCotacao));
-  }
+    function fmtPercent(value) {
+      if (!Number.isFinite(value)) return "—";
+      return `${value.toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}%`;
+    }
 
-  function renderKPIs(rows){
-    if (!rows.length){
+    function fmtDateTime(isoString) {
+      if (!isoString) return "—";
+      return new Date(isoString).toLocaleString("pt-BR");
+    }
+
+    function ymdToApiDate(value) {
+      const [year, month, day] = value.split("-");
+      return `${month}-${day}-${year}`;
+    }
+
+    function buildUrl() {
+      const moeda = selMoeda.value;
+      const dataInicial = ymdToApiDate(dtIni.value);
+      const dataFinal = ymdToApiDate(dtFim.value);
+
+      return `${API_BASE}?moeda=${encodeURIComponent(moeda)}&dataInicial=${encodeURIComponent(dataInicial)}&dataFinal=${encodeURIComponent(dataFinal)}`;
+    }
+
+    function normalizeRows(json) {
+      const arr = Array.isArray(json?.value) ? json.value : [];
+      return arr
+        .map((row) => ({
+          paridadeCompra: row.paridadeCompra,
+          paridadeVenda: row.paridadeVenda,
+          cotacaoCompra: row.cotacaoCompra,
+          cotacaoVenda: row.cotacaoVenda,
+          dataHoraCotacao: row.dataHoraCotacao,
+          tipoBoletim: row.tipoBoletim || ""
+        }))
+        .sort((a, b) => new Date(b.dataHoraCotacao) - new Date(a.dataHoraCotacao));
+    }
+
+    function boletimMatchesFilter(row, selectedFilter) {
+      const tipo = (row.tipoBoletim || "").trim().toLowerCase();
+
+      switch (selectedFilter) {
+        case "TODOS":
+          return true;
+        case "FECHAMENTO":
+          return tipo === "fechamento";
+        case "FECHAMENTO_INTERBANCARIO":
+          return tipo === "fechamento interbancário" || tipo === "fechamento interbancario";
+        case "ABERTURA":
+          return tipo === "abertura";
+        case "INTERMEDIARIO":
+          return tipo === "intermediário" || tipo === "intermediario";
+        default:
+          return true;
+      }
+    }
+
+    function updateSelectedPoint(row) {
+      if (!row) {
+        selectedPointMain.textContent = "—";
+        selectedPointDate.textContent = "Data/Hora: —";
+        selectedPointCompra.textContent = "Compra: —";
+        selectedPointVenda.textContent = "Venda: —";
+        selectedPointTipo.textContent = "Boletim: —";
+        return;
+      }
+
+      selectedPointMain.textContent = `${selMoeda.value} • Venda ${fmtNumber(row.cotacaoVenda)}`;
+      selectedPointDate.textContent = `Data/Hora: ${fmtDateTime(row.dataHoraCotacao)}`;
+      selectedPointCompra.textContent = `Compra: ${fmtNumber(row.cotacaoCompra)}`;
+      selectedPointVenda.textContent = `Venda: ${fmtNumber(row.cotacaoVenda)}`;
+      selectedPointTipo.textContent = `Boletim: ${row.tipoBoletim || "—"}`;
+    }
+
+    function resetKpis() {
       kpiCompra.textContent = "—";
       kpiVenda.textContent = "—";
       kpiData.textContent = "Data: —";
@@ -333,262 +526,427 @@
       kpiDelta.textContent = "—";
       kpiDeltaPct.textContent = "—";
       kpiPrev.textContent = "Anterior: —";
-      return;
+      kpiDeltaPct.classList.remove("good", "bad");
     }
 
-    const last = rows[0];
-    const prev = rows[1];
+    function renderKPIs(rows) {
+      resetKpis();
 
-    kpiCompra.textContent = fmtNumber(last.cotacaoCompra);
-    kpiVenda.textContent = fmtNumber(last.cotacaoVenda);
-    kpiData.textContent = `Data: ${fmtDateTime(last.dataHoraCotacao)}`;
-    kpiMoeda.textContent = `Moeda: ${selMoeda.value}`;
-    kpiTipo.textContent = `Boletim: ${last.tipoBoletim || "—"}`;
+      if (!rows.length) return;
 
-    if (prev && last.cotacaoVenda != null && prev.cotacaoVenda != null){
-      const delta = Number(last.cotacaoVenda) - Number(prev.cotacaoVenda);
-      const pct = prev.cotacaoVenda !== 0 ? (delta / Number(prev.cotacaoVenda)) * 100 : NaN;
+      const last = rows[0];
+      const prev = rows[1];
 
-      kpiDelta.textContent = fmtNumber(delta);
-      kpiDeltaPct.classList.remove("good","bad");
-      if (delta >= 0) kpiDeltaPct.classList.add("good");
-      if (delta < 0) kpiDeltaPct.classList.add("bad");
-      kpiDeltaPct.textContent = Number.isFinite(pct)
-        ? `${pct.toLocaleString("pt-BR",{minimumFractionDigits:2, maximumFractionDigits:2})}%`
-        : "—";
-      kpiPrev.textContent = `Anterior: ${fmtDateTime(prev.dataHoraCotacao)} • ${fmtNumber(prev.cotacaoVenda)}`;
-    } else {
-      kpiDelta.textContent = "—";
-      kpiDeltaPct.textContent = "—";
-      kpiPrev.textContent = "Anterior: —";
-    }
-  }
+      kpiCompra.textContent = fmtNumber(last.cotacaoCompra);
+      kpiVenda.textContent = fmtNumber(last.cotacaoVenda);
+      kpiData.textContent = `Data: ${fmtDateTime(last.dataHoraCotacao)}`;
+      kpiMoeda.textContent = `Moeda: ${selMoeda.value}`;
+      kpiTipo.textContent = `Boletim: ${last.tipoBoletim || "—"}`;
 
-  function renderTable(rows){
-    tbody.innerHTML = "";
-    const frag = document.createDocumentFragment();
+      if (prev && Number.isFinite(Number(last.cotacaoVenda)) && Number.isFinite(Number(prev.cotacaoVenda))) {
+        const delta = Number(last.cotacaoVenda) - Number(prev.cotacaoVenda);
+        const pct = Number(prev.cotacaoVenda) !== 0 ? (delta / Number(prev.cotacaoVenda)) * 100 : NaN;
 
-    for (const r of rows){
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${fmtDateTime(r.dataHoraCotacao)}</td>
-        <td class="right">${fmtNumber(r.cotacaoCompra)}</td>
-        <td class="right">${fmtNumber(r.cotacaoVenda)}</td>
-        <td class="right">${fmtNumber(r.paridadeCompra, 8)}</td>
-        <td class="right">${fmtNumber(r.paridadeVenda, 8)}</td>
-        <td>${r.tipoBoletim || ""}</td>
-      `;
-      frag.appendChild(tr);
-    }
+        kpiDelta.textContent = fmtNumber(delta);
+        kpiDeltaPct.textContent = fmtPercent(pct);
+        kpiPrev.textContent = `Anterior: ${fmtDateTime(prev.dataHoraCotacao)} • ${fmtNumber(prev.cotacaoVenda)}`;
 
-    tbody.appendChild(frag);
-    countEl.textContent = `${rows.length} linhas`;
-  }
-
-  function renderChart(rows){
-    const asc = [...rows].sort((a,b) => new Date(a.dataHoraCotacao) - new Date(b.dataHoraCotacao));
-    const labels = asc.map(r => fmtDateTime(r.dataHoraCotacao));
-    const data = asc.map(r => r.cotacaoVenda);
-
-    const ctx = document.getElementById("chart");
-    if (chart) chart.destroy();
-
-    chart = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels,
-        datasets: [{
-          label: "Cotação Venda",
-          data,
-          tension: 0.2,
-          pointRadius: 0,
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: { x: { ticks: { maxTicksLimit: 10 } } }
+        kpiDeltaPct.classList.remove("good", "bad");
+        if (delta > 0) kpiDeltaPct.classList.add("good");
+        if (delta < 0) kpiDeltaPct.classList.add("bad");
       }
-    });
-  }
+    }
 
-  function applyFilterAndSort(){
-    const q = filterEl.value.trim().toLowerCase();
+    function renderTable(rows) {
+      tbody.innerHTML = "";
 
-    viewRows = !q
-      ? [...rawRows]
-      : rawRows.filter(r =>
-          fmtDateTime(r.dataHoraCotacao).toLowerCase().includes(q) ||
-          String(r.tipoBoletim || "").toLowerCase().includes(q)
-        );
+      const fragment = document.createDocumentFragment();
 
-    const rows = [...viewRows];
-    rows.sort((a,b) => {
-      let av = a[sortKey];
-      let bv = b[sortKey];
+      rows.forEach((row) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${fmtDateTime(row.dataHoraCotacao)}</td>
+          <td class="right">${fmtNumber(row.cotacaoCompra)}</td>
+          <td class="right">${fmtNumber(row.cotacaoVenda)}</td>
+          <td class="right">${fmtNumber(row.paridadeCompra, 8)}</td>
+          <td class="right">${fmtNumber(row.paridadeVenda, 8)}</td>
+          <td>${row.tipoBoletim || ""}</td>
+        `;
+        fragment.appendChild(tr);
+      });
 
-      if (sortKey === "dataHoraCotacao") {
-        av = new Date(av).getTime();
-        bv = new Date(bv).getTime();
-      } else if (typeof av === "string") {
-        av = av.toLowerCase();
-        bv = bv.toLowerCase();
-      } else {
-        av = Number(av);
-        bv = Number(bv);
+      tbody.appendChild(fragment);
+      countEl.textContent = `${rows.length} linhas`;
+    }
+
+    function destroyChartIfExists() {
+      if (chart) {
+        chart.destroy();
+        chart = null;
+      }
+    }
+
+    function renderChart(rows) {
+      destroyChartIfExists();
+
+      if (!rows.length) {
+        btnResetZoom.disabled = true;
+        return;
       }
 
-      if (av < bv) return sortDir === "asc" ? -1 : 1;
-      if (av > bv) return sortDir === "asc" ? 1 : -1;
-      return 0;
-    });
+      const asc = [...rows].sort((a, b) => new Date(a.dataHoraCotacao) - new Date(b.dataHoraCotacao));
 
-    viewRows = rows;
-    renderTable(viewRows);
-    renderChart(viewRows);
-  }
+      const labels = asc.map((row) => fmtDateTime(row.dataHoraCotacao));
+      const vendaSeries = asc.map((row) => row.cotacaoVenda);
+      const compraSeries = asc.map((row) => row.cotacaoCompra);
 
-  function toCsv(rows){
-    const lines = [[
-      "dataHoraCotacao",
-      "cotacaoCompra",
-      "cotacaoVenda",
-      "paridadeCompra",
-      "paridadeVenda",
-      "tipoBoletim"
-    ].join(";")];
+      chart = new Chart(chartCanvas, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Cotação Venda",
+              data: vendaSeries,
+              borderWidth: 2,
+              pointRadius: 2,
+              pointHoverRadius: 6,
+              pointHitRadius: 14,
+              tension: 0.15
+            },
+            {
+              label: "Cotação Compra",
+              data: compraSeries,
+              borderWidth: 2,
+              pointRadius: 2,
+              pointHoverRadius: 6,
+              pointHitRadius: 14,
+              tension: 0.15,
+              hidden: true
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          normalized: true,
+          animation: false,
+          interaction: {
+            mode: "nearest",
+            intersect: false
+          },
+          elements: {
+            line: {
+              borderJoinStyle: "round"
+            }
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: "top"
+            },
+            tooltip: {
+              enabled: true,
+              mode: "nearest",
+              intersect: false,
+              callbacks: {
+                title(items) {
+                  if (!items.length) return "";
+                  const index = items[0].dataIndex;
+                  return labels[index];
+                },
+                label(context) {
+                  const index = context.dataIndex;
+                  const row = asc[index];
+                  return `${context.dataset.label}: ${fmtNumber(context.raw)} | ${row.tipoBoletim || ""}`;
+                },
+                afterBody(items) {
+                  if (!items.length) return "";
+                  const index = items[0].dataIndex;
+                  const row = asc[index];
+                  return [
+                    `Compra: ${fmtNumber(row.cotacaoCompra)}`,
+                    `Venda: ${fmtNumber(row.cotacaoVenda)}`,
+                    `Paridade Compra: ${fmtNumber(row.paridadeCompra, 8)}`,
+                    `Paridade Venda: ${fmtNumber(row.paridadeVenda, 8)}`,
+                    `Boletim: ${row.tipoBoletim || ""}`
+                  ];
+                }
+              }
+            },
+            zoom: {
+              pan: {
+                enabled: true,
+                mode: "x"
+              },
+              zoom: {
+                wheel: {
+                  enabled: true
+                },
+                pinch: {
+                  enabled: true
+                },
+                drag: {
+                  enabled: true
+                },
+                mode: "x"
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                maxTicksLimit: 10
+              }
+            },
+            y: {
+              ticks: {
+                callback(value) {
+                  return Number(value).toLocaleString("pt-BR");
+                }
+              }
+            }
+          },
+          onClick(event, elements) {
+            if (!elements.length) return;
+            const index = elements[0].index;
+            updateSelectedPoint(asc[index]);
+          }
+        }
+      });
 
-    for (const r of rows){
-      lines.push([
-        fmtDateTime(r.dataHoraCotacao),
-        String(r.cotacaoCompra ?? "").replace(".", ","),
-        String(r.cotacaoVenda ?? "").replace(".", ","),
-        String(r.paridadeCompra ?? "").replace(".", ","),
-        String(r.paridadeVenda ?? "").replace(".", ","),
-        r.tipoBoletim || ""
-      ].join(";"));
+      btnResetZoom.disabled = false;
     }
-    return lines.join("\n");
-  }
 
-  async function loadSeries(){
-    if (!dtIni.value || !dtFim.value){
-      statusEl.textContent = "Preencha a data inicial e final.";
-      return;
+    function sortRows(rows) {
+      const sorted = [...rows];
+
+      sorted.sort((a, b) => {
+        let av = a[sortKey];
+        let bv = b[sortKey];
+
+        if (sortKey === "dataHoraCotacao") {
+          av = new Date(av).getTime();
+          bv = new Date(bv).getTime();
+        } else if (typeof av === "string" || typeof bv === "string") {
+          av = String(av || "").toLowerCase();
+          bv = String(bv || "").toLowerCase();
+        } else {
+          av = Number(av);
+          bv = Number(bv);
+        }
+
+        if (av < bv) return sortDir === "asc" ? -1 : 1;
+        if (av > bv) return sortDir === "asc" ? 1 : -1;
+        return 0;
+      });
+
+      return sorted;
     }
 
-    btn.disabled = true;
-    btnCsv.disabled = true;
-    btnXlsx.disabled = true;
-    statusEl.textContent = "Carregando...";
-    rawRows = [];
-    viewRows = [];
-    renderTable([]);
-    if (chart) chart.destroy();
+    function applyFilterAndSort() {
+      const filterText = filterEl.value.trim().toLowerCase();
+      const boletimFilter = selBoletim.value;
 
-    try {
-      const url = buildUrl();
-      const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      let rows = [...rawRows];
 
-      const json = await res.json();
-      const rows = normalizeRows(json);
+      rows = rows.filter((row) => boletimMatchesFilter(row, boletimFilter));
 
-      rawRows = rows;
-      viewRows = [...rows];
-      sortKey = "dataHoraCotacao";
-      sortDir = "desc";
-
-      renderKPIs(rows);
-      applyFilterAndSort();
-
-      statusEl.textContent = `OK • ${selMoeda.value}`;
-      btnCsv.disabled = rows.length === 0;
-      btnXlsx.disabled = rows.length === 0;
-
-      localStorage.setItem("ptax_last_moeda", selMoeda.value);
-      localStorage.setItem("ptax_last_dtIni", dtIni.value);
-      localStorage.setItem("ptax_last_dtFim", dtFim.value);
-    } catch (err) {
-      statusEl.textContent = `Erro ao carregar: ${err.message}`;
-    } finally {
-      btn.disabled = false;
-    }
-  }
-
-  // init moedas
-  MOEDAS.forEach(m => {
-    const opt = document.createElement("option");
-    opt.value = m;
-    opt.textContent = m;
-    selMoeda.appendChild(opt);
-  });
-
-  // defaults
-  const today = new Date();
-  const end = today.toISOString().slice(0,10);
-  const startDate = new Date();
-  startDate.setFullYear(today.getFullYear() - 1);
-  const start = startDate.toISOString().slice(0,10);
-
-  dtIni.value = localStorage.getItem("ptax_last_dtIni") || start;
-  dtFim.value = localStorage.getItem("ptax_last_dtFim") || end;
-  selMoeda.value = localStorage.getItem("ptax_last_moeda") || "EUR";
-
-  document.querySelectorAll("#tbl thead th").forEach(th => {
-    th.addEventListener("click", () => {
-      const k = th.dataset.k;
-      if (sortKey === k) sortDir = sortDir === "asc" ? "desc" : "asc";
-      else {
-        sortKey = k;
-        sortDir = k === "dataHoraCotacao" ? "desc" : "asc";
+      if (filterText) {
+        rows = rows.filter((row) => {
+          return (
+            fmtDateTime(row.dataHoraCotacao).toLowerCase().includes(filterText) ||
+            String(row.tipoBoletim || "").toLowerCase().includes(filterText) ||
+            String(row.cotacaoCompra ?? "").toLowerCase().includes(filterText) ||
+            String(row.cotacaoVenda ?? "").toLowerCase().includes(filterText)
+          );
+        });
       }
-      applyFilterAndSort();
-    });
-  });
 
-  filterEl.addEventListener("input", applyFilterAndSort);
-  btn.addEventListener("click", loadSeries);
+      viewRows = sortRows(rows);
 
-  btnCsv.addEventListener("click", () => {
-    const csv = toCsv(viewRows);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `ptax_${selMoeda.value}_${dtIni.value}_${dtFim.value}.csv`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  });
+      renderKPIs(viewRows);
+      renderTable(viewRows);
+      renderChart(viewRows);
+      updateSelectedPoint(viewRows[0] || null);
 
-  btnXlsx.addEventListener("click", () => {
-    const aoa = [[
-      "dataHoraCotacao",
-      "cotacaoCompra",
-      "cotacaoVenda",
-      "paridadeCompra",
-      "paridadeVenda",
-      "tipoBoletim"
-    ]];
+      btnCsv.disabled = viewRows.length === 0;
+      btnXlsx.disabled = viewRows.length === 0;
+    }
 
-    viewRows.forEach(r => {
-      aoa.push([
-        fmtDateTime(r.dataHoraCotacao),
-        r.cotacaoCompra,
-        r.cotacaoVenda,
-        r.paridadeCompra,
-        r.paridadeVenda,
-        r.tipoBoletim || ""
-      ]);
-    });
+    function toCsv(rows) {
+      const header = [
+        "dataHoraCotacao",
+        "cotacaoCompra",
+        "cotacaoVenda",
+        "paridadeCompra",
+        "paridadeVenda",
+        "tipoBoletim"
+      ];
 
-    const ws = XLSX.utils.aoa_to_sheet(aoa);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "PTAX");
-    XLSX.writeFile(wb, `ptax_${selMoeda.value}_${dtIni.value}_${dtFim.value}.xlsx`);
-  });
+      const lines = [header.join(";")];
 
-  loadSeries();
-</script>
+      rows.forEach((row) => {
+        lines.push([
+          fmtDateTime(row.dataHoraCotacao),
+          String(row.cotacaoCompra ?? "").replace(".", ","),
+          String(row.cotacaoVenda ?? "").replace(".", ","),
+          String(row.paridadeCompra ?? "").replace(".", ","),
+          String(row.paridadeVenda ?? "").replace(".", ","),
+          row.tipoBoletim || ""
+        ].join(";"));
+      });
+
+      return lines.join("\n");
+    }
+
+    function downloadBlob(content, filename, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function exportCsv() {
+      const fileName = `ptax_${selMoeda.value}_${dtIni.value}_${dtFim.value}.csv`;
+      downloadBlob(toCsv(viewRows), fileName, "text/csv;charset=utf-8");
+    }
+
+    function exportExcel() {
+      const aoa = [[
+        "dataHoraCotacao",
+        "cotacaoCompra",
+        "cotacaoVenda",
+        "paridadeCompra",
+        "paridadeVenda",
+        "tipoBoletim"
+      ]];
+
+      viewRows.forEach((row) => {
+        aoa.push([
+          fmtDateTime(row.dataHoraCotacao),
+          row.cotacaoCompra,
+          row.cotacaoVenda,
+          row.paridadeCompra,
+          row.paridadeVenda,
+          row.tipoBoletim || ""
+        ]);
+      });
+
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "PTAX");
+      XLSX.writeFile(wb, `ptax_${selMoeda.value}_${dtIni.value}_${dtFim.value}.xlsx`);
+    }
+
+    function setDefaultDates() {
+      const today = new Date();
+      const end = today.toISOString().slice(0, 10);
+
+      const startDate = new Date();
+      startDate.setFullYear(today.getFullYear() - 1);
+      const start = startDate.toISOString().slice(0, 10);
+
+      dtIni.value = localStorage.getItem("ptax_last_dtIni") || start;
+      dtFim.value = localStorage.getItem("ptax_last_dtFim") || end;
+    }
+
+    function fillMoedasSelect() {
+      MOEDAS.forEach((moeda) => {
+        const option = document.createElement("option");
+        option.value = moeda;
+        option.textContent = moeda;
+        selMoeda.appendChild(option);
+      });
+
+      selMoeda.value = localStorage.getItem("ptax_last_moeda") || "EUR";
+    }
+
+    async function loadSeries() {
+      if (!dtIni.value || !dtFim.value) {
+        statusEl.textContent = "Preencha a data inicial e final.";
+        return;
+      }
+
+      btn.disabled = true;
+      btnCsv.disabled = true;
+      btnXlsx.disabled = true;
+      btnResetZoom.disabled = true;
+      statusEl.textContent = "Carregando...";
+
+      rawRows = [];
+      viewRows = [];
+      resetKpis();
+      updateSelectedPoint(null);
+      renderTable([]);
+      destroyChartIfExists();
+
+      try {
+        const url = buildUrl();
+        const response = await fetch(url, { cache: "no-store" });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const json = await response.json();
+        rawRows = normalizeRows(json);
+
+        applyFilterAndSort();
+
+        statusEl.textContent = `OK • ${selMoeda.value}`;
+
+        localStorage.setItem("ptax_last_moeda", selMoeda.value);
+        localStorage.setItem("ptax_last_dtIni", dtIni.value);
+        localStorage.setItem("ptax_last_dtFim", dtFim.value);
+      } catch (error) {
+        statusEl.textContent = `Erro ao carregar: ${error.message}`;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function bindTableSorting() {
+      document.querySelectorAll("#tbl thead th").forEach((th) => {
+        th.addEventListener("click", () => {
+          const nextKey = th.dataset.k;
+          if (!nextKey) return;
+
+          if (sortKey === nextKey) {
+            sortDir = sortDir === "asc" ? "desc" : "asc";
+          } else {
+            sortKey = nextKey;
+            sortDir = nextKey === "dataHoraCotacao" ? "desc" : "asc";
+          }
+
+          applyFilterAndSort();
+        });
+      });
+    }
+
+    function bindEvents() {
+      btn.addEventListener("click", loadSeries);
+      btnCsv.addEventListener("click", exportCsv);
+      btnXlsx.addEventListener("click", exportExcel);
+      btnResetZoom.addEventListener("click", () => {
+        if (chart) chart.resetZoom();
+      });
+
+      filterEl.addEventListener("input", applyFilterAndSort);
+      selBoletim.addEventListener("change", applyFilterAndSort);
+    }
+
+    function init() {
+      fillMoedasSelect();
+      setDefaultDates();
+      bindTableSorting();
+      bindEvents();
+      loadSeries();
+    }
+
+    init();
+  </script>
 </body>
 </html>
